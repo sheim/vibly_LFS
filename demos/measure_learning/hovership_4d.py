@@ -23,23 +23,22 @@ def run_demo(dynamics_model_path = './data/dynamics/', gp_model_path='./data/gp_
     infile = open(dynamics_file, 'rb')
     data = pickle.load(infile)
     infile.close()
-
-    # A prior action state pair that is considered safe (from system knowledge)
-    safest_idx = np.unravel_index(np.argmax(data['Q_M']), data['Q_M'].shape)
-
     grids = data['grids']
 
-    X_seed = np.atleast_2d(np.array([1, 0, .5, 0]))
+
+    # A prior action state pair that is considered safe (from system knowledge)
+
+    X_seed = np.atleast_2d(np.array([1, 0, .2, 0]))
     y_seed = np.array([[1]])
     seed_data = {'X': X_seed, 'y': y_seed.reshape(-1, 1)}
 
     sampler = sampling.MeasureLearner(model=true_model, model_data=data)
     sampler.init_estimation(seed_data=seed_data, prior_model_path=gp_model_file, learn_hyperparameters=False)
 
-    sampler.exploration_confidence_s = 0.60
-    sampler.exploration_confidence_e = 0.60
-    sampler.measure_confidence_s = 0.60
-    sampler.measure_confidence_e = 0.60
+    sampler.exploration_confidence_s = 0.80
+    sampler.exploration_confidence_e = 0.70
+    sampler.measure_confidence_s = 0.50
+    sampler.measure_confidence_e = 0.70
     sampler.safety_threshold_s = 0.0
     sampler.safety_threshold_e = 0.0
 
@@ -47,7 +46,7 @@ def run_demo(dynamics_model_path = './data/dynamics/', gp_model_path='./data/gp_
     sampler.seed = np.random.randint(1, 100)
     print('Seed: ' + str(sampler.seed))
 
-    n_samples = 1000
+    n_samples = 6000
 
     s0 = X_seed[0,0:2].T
 
@@ -59,7 +58,7 @@ def run_demo(dynamics_model_path = './data/dynamics/', gp_model_path='./data/gp_
 
     def plot_callback(sampler, ndx, thresholds):
         # Plot every n-th iteration
-        if ndx % 250 == 0 or ndx + 1 == n_samples or ndx == -1:
+        if ndx % 2000 == 0 or ndx + 1 == n_samples or ndx == -1:
 
             extent = [grids['states'][1][0],
                       grids['states'][1][-1],
@@ -123,6 +122,9 @@ def run_demo(dynamics_model_path = './data/dynamics/', gp_model_path='./data/gp_
             ax1.set_ylabel('state 2')
             ax2.set_xlabel('state 1')
             ax2.set_ylabel('state 2')
+
+            print("Size of S_M: " + str(np.sum(S_M_0)))
+            print("Size of true S_M: " + str(np.sum(S_M_true)))
 
 
             if sampler.y is not None:
