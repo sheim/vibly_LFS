@@ -223,12 +223,15 @@ def create_plot_callback(n_samples, experiment_name, random_string, every=50, sh
 
             data2save = {
                 'Q_V_true': Q_V_true,
+                'Q_F': Q_F,
                 'Q_V_exp': Q_V_exp,
                 'Q_V': Q_V,
                 'S_M_0': S_M_0,
                 'S_M_true': S_M_true,
                 'grids': grids,
                 'sampler.failed_samples': sampler.failed_samples,
+                'sampler.X': sampler.X,
+                'sampler.y': sampler.y,
                 'ndx': ndx,
                 'threshold': thresholds
             }
