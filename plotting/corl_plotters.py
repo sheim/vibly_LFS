@@ -7,7 +7,9 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from matplotlib.colors import ListedColormap, BoundaryNorm
 from matplotlib import rc
-rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
+# rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
+
+plt.rcParams['font.family'] = 'DejaVu Serif'
 rc('text', usetex=True)
 matplotlib.rcParams['figure.figsize'] = 5.5, 7
 
@@ -71,7 +73,8 @@ def frame_image(img, frame_width):
 
 
 def plot_Q_S(Q_V_true, Q_V_explore, Q_V_safe, S_M_0, S_M_true, grids,
-             samples=None, failed_samples=None, Q_F=None):
+             samples=None, failed_samples=None, Q_F=None,
+             label_axis=True):
     # TODO change S_true, simply have S as a tuple of Ss, and add names
     extent = [grids['actions'][0][0],
               grids['actions'][0][-1],
@@ -122,7 +125,8 @@ def plot_Q_S(Q_V_true, Q_V_explore, Q_V_safe, S_M_0, S_M_true, grids,
 
     ax_S.set_xlim((0, max(S_M_true)*1.2))
     ax_S.get_yaxis().set_visible(False)
-    ax_S.set_xlabel('$\Lambda$')
+    if label_axis:
+        ax_S.set_xlabel('$\Lambda$')
     # ax_S.set_ylabel('state space: height at apex')
     aspect_ratio_Q = 'auto'  # 1.5
     # aspect_ratio_S = ax_Q.get_xlim() / s_max
@@ -178,9 +182,9 @@ def plot_Q_S(Q_V_true, Q_V_explore, Q_V_safe, S_M_0, S_M_true, grids,
                          marker='.', edgecolors='none')
 
 
-
-    ax_Q.set_xlabel('action space $A$')
-    ax_Q.set_ylabel('state space $S$')
+    if label_axis:
+        ax_Q.set_xlabel('action space $A$')
+        ax_Q.set_ylabel('state space $S$')
 
     extent = [grids['actions'][0][0],
               grids['actions'][0][-1],
