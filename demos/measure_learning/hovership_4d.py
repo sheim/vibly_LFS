@@ -140,6 +140,8 @@ def run_demo(dynamics_model_path = './data/dynamics/', gp_model_path='./data/gp_
                 'S_M_true': S_M_true,
                 'grids': grids,
                 'sampler.failed_samples': sampler.failed_samples,
+                'sampler.X': sampler.X,
+                'sampler.y': sampler.y,
                 'ndx': ndx,
                 'threshold': thresholds
             }
