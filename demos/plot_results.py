@@ -1,6 +1,7 @@
 import pickle
 from plotting.corl_plotters import plot_Q_S
 import matplotlib.pyplot as plt
+import numpy as np
 
 def plot(filename, label_axis=True):
     infile = open(filename, 'rb')
@@ -20,6 +21,8 @@ def plot(filename, label_axis=True):
     X = data['sampler.X']
     y = data['sampler.y']
 
+    print(np.sum(failed_samples)/len(failed_samples))
+
     fig = plot_Q_S(Q_V_true, Q_V_exp, Q_V, S_M_0, S_M_true, grids,
                    samples=(X, y),
                    failed_samples=failed_samples, Q_F=Q_F,
@@ -28,7 +31,7 @@ def plot(filename, label_axis=True):
     fig.show()
     return fig
 
-path = '../results/new_example_060fail_2019-10-05_experiment_name_hovership_unviable_start/'
+path = '../results/__2019-10-06_experiment_name_hovership_unviable_start_random_3791/'
 hover_init = path + '-001_samples_hovership_unviable_start.pickle'
 hover_50 = path + '0050_samples_hovership_unviable_start.pickle'
 hover_final = path +  '0249_samples_hovership_unviable_start.pickle'
@@ -43,7 +46,7 @@ fig = plot(hover_final, True)
 fig.savefig(path + 'paper_final.pdf', format='pdf')
 
 
-path = '../results/new_example_070fail_2019-10-05_experiment_name_slip_prior/'
+path = '../results/nice_2__2019-10-06_experiment_name_slip_random_4893/'
 hover_init = path + '-001_samples_slip.pickle'
 hover_50 = path + '0050_samples_slip.pickle'
 hover_final = path +  '0499_samples_slip.pickle'
