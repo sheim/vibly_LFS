@@ -119,14 +119,12 @@ class MeasureEstimation:
     def init_estimator(self, X, y, load='./model/prior.npy'):
 
         self.prior_kernel = self.init_default_kernel()
-
         gp_prior = GPy.models.GPRegression(X=X,
                                            Y=y,
                                            kernel=self.prior_kernel,
                                            noise_var=0.001)
-
         if load and Path(load).exists():
-            gps = np.load(load)
+            gps = np.load(load,allow_pickle=True)
 
             gp_prior.update_model(False)  # do not call the underlying expensive algebra on load
             gp_prior.initialize_parameter()  # Initialize the parameters (connect the parameters up)
@@ -302,4 +300,3 @@ if __name__ == "__main__":
     # S_M_est = estimation.project_Q2S(Q_V_est)
     # plt.plot(S_M_est)
     # plt.show()
-
