@@ -71,8 +71,8 @@ def frame_image(img, frame_width):
     return framed_img
 
 
-def plot_Q_S(Q_V_true, Q_V_explore, Q_V_safe, S_M_0, S_M_true, variance, grids,
-             samples=None, failed_samples=None, Q_F=None):
+def plot_Q_S(Q_V_true, Q_V_explore, Q_V_safe, S_M_0, S_M_true, variance,
+             max_variance, grids, samples=None, failed_samples=None, Q_F=None):
     # TODO change S_true, simply have S as a tuple of Ss, and add names
     extent = [grids['actions'][0][0],
               grids['actions'][0][-1],
@@ -201,7 +201,8 @@ def plot_Q_S(Q_V_true, Q_V_explore, Q_V_safe, S_M_0, S_M_true, variance, grids,
                    grids['states'][0][-1] + frame_width_y))
 
 
-    variance_image = ax_V.pcolor(X,Y,variance,cmap='cividis')
+    variance_image = ax_V.pcolor(X,Y,variance,cmap='cividis',vmin = 0,
+                                vmax = max_variance)
 
     ax_V.contour(X, Y, Q_V_safe, [.5], colors='k')
 
@@ -239,7 +240,7 @@ def plot_Q_S(Q_V_true, Q_V_explore, Q_V_safe, S_M_0, S_M_true, variance, grids,
 
 
 def create_plot_callback(n_samples, experiment_name, random_string, every=50, show_flag=True, save_path='./results/',export_gif=True):
-
+    max_variance = 0.
     def plot_callback(sampler, ndx, thresholds):
         # Plot every n-th iteration
         if ndx % every == 0 or ndx + 1 == n_samples or ndx == -1:
@@ -261,6 +262,8 @@ def create_plot_callback(n_samples, experiment_name, random_string, every=50, sh
                                                                     'exploration_confidence'])
 
             _,variance = sampler.current_estimation.Q_M()
+            nonlocal max_variance
+            max_variance = np.max([max_variance,np.amax(variance)])
 
             data2save = {
                 'Q_V_true': Q_V_true,
@@ -274,8 +277,8 @@ def create_plot_callback(n_samples, experiment_name, random_string, every=50, sh
                 'threshold': thresholds
             }
 
-            fig = plot_Q_S(Q_V_true, Q_V_exp, Q_V, S_M_0, S_M_true, variance, grids,
-                           samples=(sampler.X, sampler.y),
+            fig = plot_Q_S(Q_V_true, Q_V_exp, Q_V, S_M_0, S_M_true, variance,
+                           max_variance, grids, samples=(sampler.X, sampler.y),
                            failed_samples=sampler.failed_samples, Q_F=Q_F)
 
             if save_path is not None:
