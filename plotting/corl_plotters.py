@@ -80,11 +80,11 @@ def plot_Q_S(Q_V_true, Q_V_explore, Q_V_safe, S_M_0, S_M_true, grids,
               grids['states'][0][0],
               grids['states'][0][-1]]
 
-    fig = plt.figure(constrained_layout=True, figsize=(5.5, 2.4))
-    gs = fig.add_gridspec(2, 2,  width_ratios=[3, 1])
-    # fig.subplots_adjust(top=1,right=1)
-    gs1 = gridspec.GridSpec(2, 2)
-    gs1.update(wspace=0.01, hspace=0.01)
+    fig = plt.figure(constrained_layout=True, figsize=(5.5, 4.8))
+    if variance is not None:
+        gs = fig.add_gridspec(2, 2,  width_ratios=[3, 1],hspace = 0.1)
+    else:
+        gs = fig.add_gridspec(1, 2,  width_ratios=[3, 1])
 
     ax_Q = fig.add_subplot(gs[0, 0])
     ax_S = fig.add_subplot(gs[0, 1], sharey=ax_Q)
@@ -93,6 +93,8 @@ def plot_Q_S(Q_V_true, Q_V_explore, Q_V_safe, S_M_0, S_M_true, grids,
     if variance is not None:
         ax_V = fig.add_subplot(gs[1, 0], sharex=ax_Q)
         ax_V.tick_params(direction='in', top=True, right=True)
+        ax_colorbar = fig.add_subplot(gs[1,1])
+        ax_colorbar.axis('off')
 
     # ax_S.plot(S, grids['states'][0])
     # ax_S.set_ylim(ax_Q.get_ylim())
@@ -238,7 +240,7 @@ def plot_Q_S(Q_V_true, Q_V_explore, Q_V_safe, S_M_0, S_M_true, grids,
         ax_V.set_ylim((grids['states'][0][0] - frame_width_y,
                        grids['states'][0][-1] + frame_width_y))
 
-        fig.colorbar(variance_image,ax=ax_V)
+        fig.colorbar(variance_image,ax=ax_colorbar,location='left')
 
     #fig.subplots_adjust(0, 0, 1, 1)
     return fig
