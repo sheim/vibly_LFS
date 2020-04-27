@@ -2,6 +2,7 @@ import numpy as np
 import pickle
 import datetime
 from pathlib import Path
+import os
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
@@ -70,7 +71,7 @@ def frame_image(img, frame_width):
     return framed_img
 
 
-def plot_Q_S(Q_V_true, Q_V_explore, Q_V_safe, S_M_0, S_M_true, grids,
+def plot_Q_S(Q_V_true, Q_V_explore, Q_V_safe, S_M_0, S_M_true, variance, grids,
              samples=None, failed_samples=None, Q_F=None):
     # TODO change S_true, simply have S as a tuple of Ss, and add names
     extent = [grids['actions'][0][0],
@@ -79,14 +80,17 @@ def plot_Q_S(Q_V_true, Q_V_explore, Q_V_safe, S_M_0, S_M_true, grids,
               grids['states'][0][-1]]
 
     fig = plt.figure(constrained_layout=True, figsize=(5.5, 2.4))
-    gs = fig.add_gridspec(1, 2,  width_ratios=[3, 1])
-    gs1 = gridspec.GridSpec(1, 2)
+    gs = fig.add_gridspec(2, 2,  width_ratios=[3, 1])
+    # fig.subplots_adjust(top=1,right=1)
+    gs1 = gridspec.GridSpec(2, 2)
     gs1.update(wspace=0.01, hspace=0.01)
 
     ax_Q = fig.add_subplot(gs[0, 0])
     ax_S = fig.add_subplot(gs[0, 1], sharey=ax_Q)
+    ax_V = fig.add_subplot(gs[1, 0], sharex=ax_Q)
     ax_Q.tick_params(direction='in', top=True, right=True)
     ax_S.tick_params(direction='in', left=False)
+    ax_V.tick_params(direction='in', top=True, right=True)
 
     # ax_S.plot(S, grids['states'][0])
     # ax_S.set_ylim(ax_Q.get_ylim())
@@ -172,6 +176,7 @@ def plot_Q_S(Q_V_true, Q_V_explore, Q_V_safe, S_M_0, S_M_true, grids,
             ax_Q.scatter(action[failed_samples], state[failed_samples],
                          facecolors=[[0.9, 0.3, 0.3]], s=30,
                          marker='.', edgecolors='none')
+            failed_samples = np.logical_not(failed_samples)
         else:
             ax_Q.scatter(action, state,
                          facecolors=[[0.9, 0.3, 0.3]], s=30,
@@ -195,11 +200,45 @@ def plot_Q_S(Q_V_true, Q_V_explore, Q_V_safe, S_M_0, S_M_true, grids,
     ax_Q.set_ylim((grids['states'][0][0] - frame_width_y,
                    grids['states'][0][-1] + frame_width_y))
 
+
+    variance_image = ax_V.pcolor(X,Y,variance,cmap='cividis')
+
+    ax_V.contour(X, Y, Q_V_safe, [.5], colors='k')
+
+    if samples is not None and samples[0] is not None:
+        action = samples[0][:, 1]
+        state = samples[0][:, 0]
+        if failed_samples is not None and len(failed_samples) > 0:
+            ax_V.scatter(action[failed_samples], state[failed_samples],
+                         marker='x', edgecolors=[[0.9, 0.3, 0.3]], s=30,
+                         facecolors=[[0.9, 0.3, 0.3]])
+            failed_samples = np.logical_not(failed_samples)
+            ax_V.scatter(action[failed_samples], state[failed_samples],
+                         facecolors=[[0.9, 0.3, 0.3]], s=30,
+                         marker='.', edgecolors='none')
+        else:
+            ax_V.scatter(action, state,
+                         facecolors=[[0.9, 0.3, 0.3]], s=30,
+                         marker='.', edgecolors='none')
+
+    ax_V.set_xlabel('action space $A$')
+    ax_V.set_ylabel('state space $S$')
+
+    frame_width_x = grids['actions'][0][-1]*.03
+    ax_V.set_xlim((grids['actions'][0][0] - frame_width_x,
+                   grids['actions'][0][-1] + frame_width_x))
+
+    frame_width_y = grids['states'][0][-1]*.03
+    ax_V.set_ylim((grids['states'][0][0] - frame_width_y,
+                   grids['states'][0][-1] + frame_width_y))
+
+    # TODO Change colorbar location
+    fig.colorbar(variance_image,ax=ax_V)
     #fig.subplots_adjust(0, 0, 1, 1)
     return fig
 
 
-def create_plot_callback(n_samples, experiment_name, random_string, every=50, show_flag=True, save_path='./results/'):
+def create_plot_callback(n_samples, experiment_name, random_string, every=50, show_flag=True, save_path='./results/',export_gif=True):
 
     def plot_callback(sampler, ndx, thresholds):
         # Plot every n-th iteration
@@ -221,6 +260,8 @@ def create_plot_callback(n_samples, experiment_name, random_string, every=50, sh
                                                                 confidence_threshold=thresholds[
                                                                     'exploration_confidence'])
 
+            _,variance = sampler.current_estimation.Q_M()
+
             data2save = {
                 'Q_V_true': Q_V_true,
                 'Q_V_exp': Q_V_exp,
@@ -233,7 +274,7 @@ def create_plot_callback(n_samples, experiment_name, random_string, every=50, sh
                 'threshold': thresholds
             }
 
-            fig = plot_Q_S(Q_V_true, Q_V_exp, Q_V, S_M_0, S_M_true, grids,
+            fig = plot_Q_S(Q_V_true, Q_V_exp, Q_V, S_M_0, S_M_true, variance, grids,
                            samples=(sampler.X, sampler.y),
                            failed_samples=sampler.failed_samples, Q_F=Q_F)
 
@@ -242,7 +283,8 @@ def create_plot_callback(n_samples, experiment_name, random_string, every=50, sh
                 today = [datetime.date.today()]
                 folder_name = str(today[0]) + '_experiment_name_' + experiment_name + '_random_' + random_string
 
-                filename = str(ndx).zfill(4) + '_samples_' + experiment_name
+                filename_to_format = '{:s}_samples_' + experiment_name + '_fig'
+                filename = filename_to_format.format(str(ndx).zfill(4))
 
                 path = save_path + folder_name + '/'
 
@@ -253,7 +295,7 @@ def create_plot_callback(n_samples, experiment_name, random_string, every=50, sh
                 pickle.dump(data2save, outfile)
                 outfile.close()
 
-                plt.savefig(path + filename + '_fig.pdf', format='pdf')
+                plt.savefig(path + filename + '.pdf', format='pdf')
 
             plt.tight_layout()
             if show_flag:
@@ -266,5 +308,11 @@ def create_plot_callback(n_samples, experiment_name, random_string, every=50, sh
                       + str(np.sum(np.abs(S_M_0 - S_M_true)))
                       + " Failure rate: " + str(np.mean(sampler.y < 0)))
 
-    return plot_callback
+        if ndx + 1 == n_samples:
+            if export_gif and save_path is not None:
+                generic_filename_minus = path + filename_to_format.format('-0*') + '.pdf'
+                generic_filename_plus = path + filename_to_format.format('0*') + '.pdf'
+                evolution_command = "convert -verbose -delay 50 -loop 0 -density 300 {:s} {:s} {:s}/evolution_{:s}.gif".format(generic_filename_minus,generic_filename_plus,path,random_string)
+                os.system(evolution_command)
 
+    return plot_callback
