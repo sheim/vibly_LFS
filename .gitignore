@@ -149,3 +149,6 @@ ENV/
 *-blx.aux
 *-blx.bib
 *.run.xml
+
+Pipfile
+Pipfile.lock
