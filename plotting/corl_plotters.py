@@ -71,8 +71,9 @@ def frame_image(img, frame_width):
     return framed_img
 
 
-def plot_Q_S(Q_V_true, Q_V_explore, Q_V_safe, S_M_0, S_M_true, variance,
-             max_variance, grids, samples=None, failed_samples=None, Q_F=None):
+def plot_Q_S(Q_V_true, Q_V_explore, Q_V_safe, S_M_0, S_M_true, grids,
+            samples=None, failed_samples=None, Q_F=None, variance = None,
+            max_variance = None):
     # TODO change S_true, simply have S as a tuple of Ss, and add names
     extent = [grids['actions'][0][0],
               grids['actions'][0][-1],
@@ -87,10 +88,11 @@ def plot_Q_S(Q_V_true, Q_V_explore, Q_V_safe, S_M_0, S_M_true, variance,
 
     ax_Q = fig.add_subplot(gs[0, 0])
     ax_S = fig.add_subplot(gs[0, 1], sharey=ax_Q)
-    ax_V = fig.add_subplot(gs[1, 0], sharex=ax_Q)
     ax_Q.tick_params(direction='in', top=True, right=True)
     ax_S.tick_params(direction='in', left=False)
-    ax_V.tick_params(direction='in', top=True, right=True)
+    if variance is not None:
+        ax_V = fig.add_subplot(gs[1, 0], sharex=ax_Q)
+        ax_V.tick_params(direction='in', top=True, right=True)
 
     # ax_S.plot(S, grids['states'][0])
     # ax_S.set_ylim(ax_Q.get_ylim())
@@ -200,47 +202,51 @@ def plot_Q_S(Q_V_true, Q_V_explore, Q_V_safe, S_M_0, S_M_true, variance,
     ax_Q.set_ylim((grids['states'][0][0] - frame_width_y,
                    grids['states'][0][-1] + frame_width_y))
 
-
-    variance_image = ax_V.pcolor(X,Y,variance,cmap='cividis',vmin = 0,
-                                vmax = max_variance)
-
-    ax_V.contour(X, Y, Q_V_safe, [.5], colors='k')
-
-    if samples is not None and samples[0] is not None:
-        action = samples[0][:, 1]
-        state = samples[0][:, 0]
-        if failed_samples is not None and len(failed_samples) > 0:
-            ax_V.scatter(action[failed_samples], state[failed_samples],
-                         marker='x', edgecolors=[[0.9, 0.3, 0.3]], s=30,
-                         facecolors=[[0.9, 0.3, 0.3]])
-            failed_samples = np.logical_not(failed_samples)
-            ax_V.scatter(action[failed_samples], state[failed_samples],
-                         facecolors=[[0.9, 0.3, 0.3]], s=30,
-                         marker='.', edgecolors='none')
+    if variance is not None:
+        if max_variance is not None:
+            variance_image = ax_V.pcolor(X,Y,variance,cmap='cividis',vmin = 0,
+                                    vmax = max_variance)
         else:
-            ax_V.scatter(action, state,
-                         facecolors=[[0.9, 0.3, 0.3]], s=30,
-                         marker='.', edgecolors='none')
+            variance_image = ax_V.pcolor(X,Y,variance,cmap='cividis')
 
-    ax_V.set_xlabel('action space $A$')
-    ax_V.set_ylabel('state space $S$')
+        ax_V.contour(X, Y, Q_V_safe, [.5], colors='k')
 
-    frame_width_x = grids['actions'][0][-1]*.03
-    ax_V.set_xlim((grids['actions'][0][0] - frame_width_x,
-                   grids['actions'][0][-1] + frame_width_x))
+        if samples is not None and samples[0] is not None:
+            action = samples[0][:, 1]
+            state = samples[0][:, 0]
+            if failed_samples is not None and len(failed_samples) > 0:
+                ax_V.scatter(action[failed_samples], state[failed_samples],
+                             marker='x', edgecolors=[[0.9, 0.3, 0.3]], s=30,
+                             facecolors=[[0.9, 0.3, 0.3]])
+                failed_samples = np.logical_not(failed_samples)
+                ax_V.scatter(action[failed_samples], state[failed_samples],
+                             facecolors=[[0.9, 0.3, 0.3]], s=30,
+                             marker='.', edgecolors='none')
+            else:
+                ax_V.scatter(action, state,
+                             facecolors=[[0.9, 0.3, 0.3]], s=30,
+                             marker='.', edgecolors='none')
 
-    frame_width_y = grids['states'][0][-1]*.03
-    ax_V.set_ylim((grids['states'][0][0] - frame_width_y,
-                   grids['states'][0][-1] + frame_width_y))
+        ax_V.set_xlabel('action space $A$')
+        ax_V.set_ylabel('state space $S$')
 
-    # TODO Change colorbar location
-    fig.colorbar(variance_image,ax=ax_V)
+        frame_width_x = grids['actions'][0][-1]*.03
+        ax_V.set_xlim((grids['actions'][0][0] - frame_width_x,
+                       grids['actions'][0][-1] + frame_width_x))
+
+        frame_width_y = grids['states'][0][-1]*.03
+        ax_V.set_ylim((grids['states'][0][0] - frame_width_y,
+                       grids['states'][0][-1] + frame_width_y))
+
+        fig.colorbar(variance_image,ax=ax_V)
+
     #fig.subplots_adjust(0, 0, 1, 1)
     return fig
 
 
-def create_plot_callback(n_samples, experiment_name, random_string, every=50, show_flag=True, save_path='./results/',export_gif=True):
-    max_variance = 0.
+def create_plot_callback(n_samples, experiment_name, random_string, every=50, plot_variance = False, show_flag=True, save_path='./results/',export_gif=False):
+    if plot_variance:
+        max_variance = 0
     def plot_callback(sampler, ndx, thresholds):
         # Plot every n-th iteration
         if ndx % every == 0 or ndx + 1 == n_samples or ndx == -1:
@@ -261,9 +267,14 @@ def create_plot_callback(n_samples, experiment_name, random_string, every=50, sh
                                                                 confidence_threshold=thresholds[
                                                                     'exploration_confidence'])
 
-            _,variance = sampler.current_estimation.Q_M()
-            nonlocal max_variance
-            max_variance = np.max([max_variance,np.amax(variance)])
+            if plot_variance:
+                _,variance = sampler.current_estimation.Q_M()
+                nonlocal max_variance
+                max_variance = np.max([max_variance,np.amax(variance)])
+
+            else:
+                variance = None
+                max_variance = None
 
             data2save = {
                 'Q_V_true': Q_V_true,
@@ -277,9 +288,10 @@ def create_plot_callback(n_samples, experiment_name, random_string, every=50, sh
                 'threshold': thresholds
             }
 
-            fig = plot_Q_S(Q_V_true, Q_V_exp, Q_V, S_M_0, S_M_true, variance,
-                           max_variance, grids, samples=(sampler.X, sampler.y),
-                           failed_samples=sampler.failed_samples, Q_F=Q_F)
+            fig = plot_Q_S(Q_V_true, Q_V_exp, Q_V, S_M_0, S_M_true,
+                           grids, samples=(sampler.X, sampler.y),
+                           failed_samples=sampler.failed_samples, Q_F=Q_F,
+                           variance = variance,max_variance = max_variance)
 
             if save_path is not None:
 
@@ -316,6 +328,11 @@ def create_plot_callback(n_samples, experiment_name, random_string, every=50, sh
                 generic_filename_minus = path + filename_to_format.format('-0*') + '.pdf'
                 generic_filename_plus = path + filename_to_format.format('0*') + '.pdf'
                 evolution_command = "convert -verbose -delay 50 -loop 0 -density 300 {:s} {:s} {:s}/evolution_{:s}.gif".format(generic_filename_minus,generic_filename_plus,path,random_string)
-                os.system(evolution_command)
+                try:
+                    os.system(evolution_command)
+                except Exception as e:
+                    print('Error when exporting the gif concatenation of the plots:')
+                    print(e)
+                    print('Suggestion : make sure the command \'convert\', from \'imagemagick\', is installed.')
 
     return plot_callback

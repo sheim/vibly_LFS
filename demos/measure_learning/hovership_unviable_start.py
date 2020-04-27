@@ -47,7 +47,9 @@ def run_demo(dynamics_model_path = './data/dynamics/', gp_model_path = './data/g
                                                experiment_name='hovership_unviable_start',
                                                random_string=random_string,
                                                save_path=results_path,
-                                               show_flag=True)
+                                               show_flag=True,
+                                               plot_variance=False,
+                                               export_gif=True)
 
     s0 = 1.5
     sampler.run(n_samples=n_samples, s0=s0, callback=plot_callback)
