@@ -72,7 +72,7 @@ def get_perturbation_indices(trajectories):
     return index0, max_up, max_down
 
 def plot_ground_perturbations(ax, trajectories, S_M, grids, p, v_threshold=0.1,
-                         col_offset=0.65, col_norm=1.0, draw_ground=True, draw_LC=False,
+                         col_offset=0.65, col_norm=1.0, draw_ground=True, draw_LC=False, draw_unviable=False,
                          Q_M=None, colormap=None, norm=1):
     '''
     Plot a series of trajectories, centered around level-ground as nominal
@@ -123,6 +123,18 @@ def plot_ground_perturbations(ax, trajectories, S_M, grids, p, v_threshold=0.1,
             to_index = np.abs(traj.t-traj.t_events[3]).argmin()
             ax.plot(traj.y[0, td_index:to_index],
                     traj.y[-1, td_index:to_index], color=col, linewidth=2)
+
+            try:
+                td_index = np.abs(traj.t - traj.t_events[1]).argmin()
+                to_index = np.abs(traj.t-traj.t_events[3]).argmin()
+                ax.plot(traj.y[0, td_index:to_index],
+                        traj.y[-1, td_index:to_index], color=col, linewidth=2)
+            except:
+                pass
+        else:  # plot failures
+            if draw_unviable:
+                ax.plot(traj.y[0], traj.y[1], linewidth=2.5, color='grey')
+
         if idx0 > 0:
             zod = 3
             traj = trajectories[idx0]

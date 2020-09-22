@@ -86,7 +86,7 @@ for file_1, file_2 in zip(set_files, traj_files):
 # * Flags for which plots to generate
 
 TRAJ_PLOTS = True
-WATERFALL_PLOT = True
+WATERFALL_PLOT = False
 POINC_PLOT = False
 
 # * which trials
@@ -205,6 +205,7 @@ if TRAJ_PLOTS:
                                          col_norm=0.05,
                                          col_offset=0.9,
                                          draw_LC=True,
+                                         draw_unviable=False,
                                          Q_M=data_list[idx]['Q_M'],
                                          norm=norm)
 
