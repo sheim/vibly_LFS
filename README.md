@@ -1,3 +1,7 @@
+
+# DEPRECATED
+
+This code is now available (as it was before) at [github.com/sheim/vibly/](https://github.com/sheim/vibly/), and you should _not_ download this repo. We used `git-lfs` for tracking binaries of data, which turned out to be a painful and annoying experience. The new repo has been cleaned out (including the git history), please use that one. The difference is that datasets are now not included when you download the repo, but these can either be regenerated very quickly (couple of minutes on a laptop), or for the RSBL paper, is available on [Dryad](https://doi.org/10.5061/dryad.44j0zpcbj).
 # Vibly: viability in state-action space
 
 A Python framework for working with viable sets in state-action space, and can be used for _safe learning_ and for evaluating the effect of morphology on robustness and stability. This code accompanies the following papers:
